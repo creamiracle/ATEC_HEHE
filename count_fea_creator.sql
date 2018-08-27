@@ -1,11 +1,11 @@
 drop table if exists train_count_fea;
 CREATE TABLE train_count_fea as
 select event_id
-		--change -1 to 1
+	--change -1 to 1
         ,CAST(case when is_fraud = 0 then 0 else 1 end as BIGINT ) as label
                 
-		--one hot
-		,a.network
+	--one hot
+	,a.network
         ,a.mobile_oper_platform
         ,a.pay_scene
         ,a.operation_channel
@@ -30,69 +30,69 @@ select event_id
         ,user_income_card_no_count_in_hour
         ,oppo_income_card_no_count_in_hour
         ,user_plat_chan_count_in_hour
-		,user_plat_scene_count_in_hour
-		,user_scene_chan_count_in_hour
-		,user_plat_net_count_in_hour
-		,user_scene_net_count_in_hour
-		,user_chan_net_count_in_hour
-		,user_ip_net_count_in_hour
-		,user_ip_chan_count_in_hour
-		,user_ip_scene_count_in_hour
-		,user_ip_plat_count_in_hour
-		,user_dev_plat_count_in_hour
-		,user_dev_net_count_in_hour
-		,user_dev_ip_count_in_hour
-		,user_dev_oper_count_in_hour
-		,user_dev_scene_count_in_hour
+	,user_plat_scene_count_in_hour
+	,user_scene_chan_count_in_hour
+	,user_plat_net_count_in_hour
+	,user_scene_net_count_in_hour
+	,user_chan_net_count_in_hour
+	,user_ip_net_count_in_hour
+	,user_ip_chan_count_in_hour
+	,user_ip_scene_count_in_hour
+	,user_ip_plat_count_in_hour
+	,user_dev_plat_count_in_hour
+	,user_dev_net_count_in_hour
+	,user_dev_ip_count_in_hour
+	,user_dev_oper_count_in_hour
+	,user_dev_scene_count_in_hour
         ,oppo_count_in_hour
         ,network_ip_count
-		,oper_scene_platform_count
+	,oper_scene_platform_count
         ,oper_scene_network_count
         
    
-		--amt features
+	--amt features
         ,amt_sum_in_hour
         ,avg(amt) over(partition by a.user_id  order by a.gmt_occur) as avg_trade_amt_before_cur_user
         ,sum(amt) over(partition by a.opposing_id  order by a.gmt_occur) as before_sum_oppo_id_sum_amt
-		,sum(amt) over(partition by a.user_id order by a.gmt_occur) as before_sum_user_id_sum_amt
+	,sum(amt) over(partition by a.user_id order by a.gmt_occur) as before_sum_user_id_sum_amt
 
         --accumulate features
         ,sum(user_count_in_hour) over(PARTITION by a.user_id ORDER by a.gmt_occur) as user_total_trade_time_till_cnt_hour
        	,sum(oppo_count_in_hour) over(PARTITION by a.opposing_id ORDER by a.gmt_occur) as oppo_total_trade_time_till_cnt_hour
-		,sum(oppo_user_count_in_hour) over(PARTITION by a.user_id,a.opposing_id ORDER by a.gmt_occur) as oppo_user_total_trade_time_till_cnt_hour
-		,sum(device_count_in_hour) over(PARTITION by a.user_id,a.device_sign ORDER by a.gmt_occur) as user_device_total_trade_time_till_cnt_hour
-		,sum(operation_channel_count_in_hour) over(PARTITION by a.user_id,a.operation_channel ORDER by a.gmt_occur) as user_oper_chan_total_trade_time_till_cnt_hour
-		,sum(ip_count_in_hour) over(PARTITION by a.user_id,a.client_ip ORDER by a.gmt_occur) as user_ip_total_trade_time_till_cnt_hour
-		,sum(network_count_in_hour) over(PARTITION by a.user_id,a.network ORDER by a.gmt_occur) as user_network_total_trade_time_till_cnt_hour
-        ,sum(pay_sence_count_in_hour) over(PARTITION by a.user_id,a.pay_scene ORDER by a.gmt_occur) as user_pay_scene_total_trade_time_till_cnt_hour
-		,sum(mobile_oper_platform_count_in_hour) over(PARTITION by a.user_id,a.mobile_oper_platform ORDER by a.gmt_occur) as user_mobile_platform_total_trade_time_till_cnt_hour
+	,sum(oppo_user_count_in_hour) over(PARTITION by a.user_id,a.opposing_id ORDER by a.gmt_occur) as oppo_user_total_trade_time_till_cnt_hour
+	,sum(device_count_in_hour) over(PARTITION by a.user_id,a.device_sign ORDER by a.gmt_occur) as user_device_total_trade_time_till_cnt_hour
+	,sum(operation_channel_count_in_hour) over(PARTITION by a.user_id,a.operation_channel ORDER by a.gmt_occur) as user_oper_chan_total_trade_time_till_cnt_hour
+	,sum(ip_count_in_hour) over(PARTITION by a.user_id,a.client_ip ORDER by a.gmt_occur) as user_ip_total_trade_time_till_cnt_hour
+	,sum(network_count_in_hour) over(PARTITION by a.user_id,a.network ORDER by a.gmt_occur) as user_network_total_trade_time_till_cnt_hour
+        ,sum(pay_sence_ount_in_hour) over(PARTITION by a.user_id,a.pay_scene ORDER by a.gmt_occur) as user_pay_scene_total_trade_time_till_cnt_hour
+	,sum(mobile_oper_platform_count_in_hour) over(PARTITION by a.user_id,a.mobile_oper_platform ORDER by a.gmt_occur) as user_mobile_platform_total_trade_time_till_cnt_hour
 
-		--time features
+	--time features
         ,unix_timestamp(to_date(a.gmt_occur, 'yyyy-mm-dd hh')) - lag(unix_timestamp(to_date(a.gmt_occur, 'yyyy-mm-dd hh'))) over(partition by a.user_id order by a.gmt_occur asc) as difftime_last_trade
-		,unix_timestamp(to_date(a.gmt_occur, 'yyyy-mm-dd hh')) - lag(unix_timestamp(to_date(a.gmt_occur, 'yyyy-mm-dd hh')),2) over(partition by a.user_id order by a.gmt_occur asc) as difftime_last_last_trade
-		,datepart(to_date(a.gmt_occur, 'yyyy-mm-dd hh'),'dd') as day
-		,datepart(to_date(a.gmt_occur, 'yyyy-mm-dd hh'),'hh') as hour
+	,unix_timestamp(to_date(a.gmt_occur, 'yyyy-mm-dd hh')) - lag(unix_timestamp(to_date(a.gmt_occur, 'yyyy-mm-dd hh')),2) over(partition by a.user_id order by a.gmt_occur asc) as difftime_last_last_trade
+	,datepart(to_date(a.gmt_occur, 'yyyy-mm-dd hh'),'dd') as day
+	,datepart(to_date(a.gmt_occur, 'yyyy-mm-dd hh'),'hh') as hour
 
-		--rank features
+	--rank features
         ,rank() over(partition by a.user_id,a.card_bin_prov,a.card_mobile_prov,a.card_cert_prov,a.ip_prov,a.cert_prov order by a.gmt_occur) as province_cumcount_rank
         ,rank() over(partition by a.user_id,a.card_bin_prov,a.card_mobile_prov,a.card_cert_prov,a.ip_prov,a.cert_prov,a.card_bin_city,a.card_mobile_city,a.card_cert_city,a.ip_city,a.cert_city order by a.gmt_occur) as province_city_cumcount_rank
         ,rank() over(partition by a.user_id,a.card_bin_city,a.card_mobile_city,a.card_cert_city,a.ip_city,a.cert_city order by a.gmt_occur) as city_cumcount_rank
         ,rank() over(partition by a.user_id,a.card_bin_prov,a.card_mobile_prov,a.card_cert_prov,a.ip_prov,a.cert_prov,a.province order by a.gmt_occur) / rank() over(partition by a.user_id  order by a.gmt_occur) as province_cumcount_rank_per
-		,rank() over(partition by a.user_id,a.client_ip,a.ip_prov,a.ip_city order by a.gmt_occur) as ip_prov_city_cumcount
-		,rank() over(partition by a.user_id  order by a.gmt_occur) as before_cnt_user_id
+	,rank() over(partition by a.user_id,a.client_ip,a.ip_prov,a.ip_city order by a.gmt_occur) as ip_prov_city_cumcount
+	,rank() over(partition by a.user_id  order by a.gmt_occur) as before_cnt_user_id
         ,rank() over(partition by a.user_id,a.client_ip  order by a.gmt_occur) as before_cnt_user_id_same_client_ip
         ,rank() over(partition by a.user_id,a.network  order by a.gmt_occur) as before_cnt_user_id_same_net
         ,rank() over(partition by a.user_id,a.operation_channel  order by a.gmt_occur) as before_cnt_user_id_same_chan
         ,rank() over(partition by a.user_id,a.device_sign  order by a.gmt_occur) as before_cnt_user_id_same_device_sign
         ,rank() over(partition by a.user_id,a.mobile_oper_platform  order by a.gmt_occur) as before_cnt_user_id_same_oper
         ,rank() over(partition by a.user_id,a.pay_scene  order by a.gmt_occur) as before_cnt_user_id_same_scene
-		,rank() over(partition by a.user_id,a.client_ip  order by a.gmt_occur)/rank() over(partition by a.user_id  order by a.gmt_occur) as before_cnt_user_id_same_client_ip_per
-		,rank() over(partition by a.user_id,a.device_sign  order by a.gmt_occur)/rank() over(partition by a.user_id  order by a.gmt_occur) as before_cnt_user_id_same_device_sign_per
+	,rank() over(partition by a.user_id,a.client_ip  order by a.gmt_occur)/rank() over(partition by a.user_id  order by a.gmt_occur) as before_cnt_user_id_same_client_ip_per
+	,rank() over(partition by a.user_id,a.device_sign  order by a.gmt_occur)/rank() over(partition by a.user_id  order by a.gmt_occur) as before_cnt_user_id_same_device_sign_per
         ,rank() over(partition by a.user_id,a.amt  order by a.gmt_occur) as before_cnt_user_id_same_amt
         ,rank() over(partition by a.user_id,a.amt  order by a.gmt_occur)/rank() over(partition by a.user_id  order by a.gmt_occur) as before_cnt_user_id_same_amt_per
         ,rank() over(partition by a.opposing_id,a.card_cert_no,a.income_card_no  order by a.gmt_occur) as oppo_card_income_cumcount
         ,rank() over(partition by a.user_id,a.device_sign,a.mobile_oper_platform,a.operation_channel  order by a.gmt_occur) as before_cnt_user_id_same_device_sign_mobile_oper_channel_rank
-		,rank() over(partition by a.opposing_id,a.user_id order by a.gmt_occur) as user_oppo_rank
+	,rank() over(partition by a.opposing_id,a.user_id order by a.gmt_occur) as user_oppo_rank
         ,rank() over(partition by a.opposing_id,a.pay_scene order by a.gmt_occur) as oppo_scene_rank
         ,rank() over(partition by a.opposing_id,a.operation_channel order by a.gmt_occur) as oppo_operation_channel_rank
         ,rank() over(partition by a.opposing_id,a.mobile_oper_platform order by a.gmt_occur) as oppo_mobile_oper_platform_rank
@@ -139,8 +139,8 @@ select event_id
         ,dense_rank() over(partition by a.user_id,a.client_ip  order by substr(cast(a.gmt_occur as string),1,10)) as before_cnt_user_id_same_client_ip_dense_rank_2
         ,dense_rank() over(partition by a.user_id,a.device_sign  order by substr(cast(a.gmt_occur as string),1,10)) as before_cnt_user_id_same_device_sign_dense_rank_2
         ,dense_rank() over(partition by a.user_id,a.operation_channel  order by a.gmt_occur) as before_cnt_user_id_same_operation_channel_dense_rank
-		,dense_rank() over(partition by a.user_id,a.pay_scene  order by a.gmt_occur) as before_cnt_user_id_same_pay_scene_dense_rank
-		,dense_rank() over(partition by a.user_id,a.mobile_oper_platform  order by a.gmt_occur) as before_cnt_user_id_same_mobile_oper_platform_dense_rank
+	,dense_rank() over(partition by a.user_id,a.pay_scene  order by a.gmt_occur) as before_cnt_user_id_same_pay_scene_dense_rank
+	,dense_rank() over(partition by a.user_id,a.mobile_oper_platform  order by a.gmt_occur) as before_cnt_user_id_same_mobile_oper_platform_dense_rank
         ,dense_rank() over(partition by a.user_id,a.amt  order by substr(cast(a.gmt_occur as string),1,10)) as before_cnt_user_id_same_amt_dense_rank_2
         ,dense_rank() over(partition by a.user_id,a.client_ip,a.operation_channel  order by a.gmt_occur) as user_ip_oper_dense_rank
         ,dense_rank() over(partition by a.user_id,a.client_ip,a.mobile_oper_platform  order by a.gmt_occur) as user_ip_plat_dense_rank
